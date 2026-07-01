@@ -122,18 +122,4 @@ with tab_admin:
                 with st.form("form_editar", clear_on_submit=True):
                     edit_nombre = st.text_input("Nombre del Producto:", value=producto_a_editar['nombre'])
                     edit_desc = st.text_area("Descripción del Producto:", value=producto_a_editar['descripcion'])
-                    edit_precio = st.number_input("Precio de Venta ($ COP):", value=int(producto_a_editar['precio']), min_value=0, step=500)
-                    st.caption("Si no deseas cambiar la foto actual, deja este espacio en blanco.")
-                    edit_foto = st.file_uploader("Subir Nueva Foto (opcional):", type=["jpg", "jpeg", "png"])
-                    
-                    col_guardar, col_cancelar = st.columns(2)
-                    btn_guardar_edicion = col_guardar.form_submit_button("Guardar Cambios")
-                    btn_cancelar = col_cancelar.form_submit_button("Cancelar")
-                    
-                    if btn_guardar_edicion:
-                        if edit_nombre and edit_precio > 0:
-                            producto_a_editar['nombre'] = edit_nombre
-                            producto_a_editar['descripcion'] = edit_desc
-                            producto_a_editar['precio'] = edit_precio
-                            if edit_foto is not None:
-                                producto_a_editar['imagen'] = Image.open(edit
+                    edit_precio = st.number_input("Precio
