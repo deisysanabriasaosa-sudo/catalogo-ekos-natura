@@ -42,7 +42,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 2. Inicialización del estado de la sesión (Catálogo y Seguridad)
+# 2. Inicialización del estado de la sesión (Catálogo, Seguridad y Edición)
 if 'catalogo' not in st.session_state:
     st.session_state.catalogo = [
         {
@@ -61,9 +61,12 @@ if 'catalogo' not in st.session_state:
         }
     ]
 
-# Variable para controlar si el administrador ha iniciado sesión
 if 'admin_logged_in' not in st.session_state:
     st.session_state.admin_logged_in = False
+
+# Variable para saber si estamos editando un producto (guarda el ID)
+if 'edit_id' not in st.session_state:
+    st.session_state.edit_id = None
 
 # Configuración del Teléfono del Vendedor y Nombre
 st.sidebar.header("⚙️ Configuración del Canal")
@@ -86,13 +89,13 @@ with tab_admin:
         
         with st.form("login_form"):
             usuario = st.text_input("Usuario")
-            clave = st.text_input("Contraseña", type="password") # El type="password" oculta los caracteres con asteriscos
+            clave = st.text_input("Contraseña", type="password")
             btn_login = st.form_submit_button("Ingresar")
             
             if btn_login:
                 if usuario == "DCSANABRIA" and clave == "1098665319*":
                     st.session_state.admin_logged_in = True
-                    st.rerun() # Recarga la página para mostrar el panel
+                    st.rerun()
                 else:
                     st.error("Usuario o contraseña incorrectos. Inténtalo de nuevo.")
     
@@ -103,74 +106,34 @@ with tab_admin:
         col_saludo.success("¡Bienvenida, Deisy! Has iniciado sesión correctamente.")
         if col_salir.button("Cerrar Sesión"):
             st.session_state.admin_logged_in = False
+            st.session_state.edit_id = None # Limpiamos si estaba editando algo
             st.rerun()
 
-        st.markdown('<div class="admin-section"><h3>Añadir o Actualizar Producto</h3></div>', unsafe_allow_html=True)
+        st.markdown('<div class="admin-section"><h3>Gestión de Productos</h3></div>', unsafe_allow_html=True)
         
-        with st.form("form_producto", clear_on_submit=True):
-            nuevo_nombre = st.text_input("Nombre del Producto:", placeholder="Ej. Manteca Corporal Ucuuba")
-            nueva_desc = st.text_area("Descripción del Producto:", placeholder="Detalla los beneficios y el activo...")
-            nuevo_precio = st.number_input("Precio de Venta ($ COP):", min_value=0, step=500)
-            foto_perfil = st.file_uploader("Subir Foto del Producto:", type=["jpg", "jpeg", "png"])
+        # --- LÓGICA DE EDICIÓN O CREACIÓN ---
+        if st.session_state.edit_id is not None:
+            # Buscar el producto a editar
+            producto_a_editar = next((p for p in st.session_state.catalogo if p["id"] == st.session_state.edit_id), None)
             
-            guardar = st.form_submit_button("Agregar al Catálogo")
-            
-            if guardar:
-                if nuevo_nombre and nuevo_precio > 0:
-                    img_data = None
-                    if foto_perfil is not None:
-                        img_data = Image.open(foto_perfil)
+            if producto_a_editar:
+                st.info(f"✏️ Estás editando: **{producto_a_editar['nombre']}**")
+                
+                with st.form("form_editar", clear_on_submit=True):
+                    edit_nombre = st.text_input("Nombre del Producto:", value=producto_a_editar['nombre'])
+                    edit_desc = st.text_area("Descripción del Producto:", value=producto_a_editar['descripcion'])
+                    edit_precio = st.number_input("Precio de Venta ($ COP):", value=int(producto_a_editar['precio']), min_value=0, step=500)
+                    st.caption("Si no deseas cambiar la foto actual, deja este espacio en blanco.")
+                    edit_foto = st.file_uploader("Subir Nueva Foto (opcional):", type=["jpg", "jpeg", "png"])
                     
-                    nuevo_item = {
-                        "id": len(st.session_state.catalogo) + 1,
-                        "nombre": nuevo_nombre,
-                        "descripcion": nueva_desc,
-                        "precio": nuevo_precio,
-                        "imagen": img_data
-                    }
+                    col_guardar, col_cancelar = st.columns(2)
+                    btn_guardar_edicion = col_guardar.form_submit_button("Guardar Cambios")
+                    btn_cancelar = col_cancelar.form_submit_button("Cancelar")
                     
-                    st.session_state.catalogo.append(nuevo_item)
-                    st.success(f"¡{nuevo_nombre} ha sido agregado exitosamente al catálogo!")
-                else:
-                    st.error("Por favor ingresa un nombre válido y un precio mayor a 0.")
-
-        # Listado para eliminar productos
-        if st.session_state.catalogo:
-            st.subheader("🗑️ Gestionar Inventario Existente")
-            for i, prod in enumerate(st.session_state.catalogo):
-                col_info, col_btn = st.columns([4, 1])
-                col_info.write(f"**{prod['nombre']}** - ${prod['precio']:,} COP")
-                if col_btn.button("Eliminar", key=f"del_{prod['id']}"):
-                    st.session_state.catalogo.pop(i)
-                    st.rerun()
-
-# ==========================================
-# 4. VISTA DEL CLIENTE (Pestaña Catálogo)
-# ==========================================
-with tab_cliente:
-    if not st.session_state.catalogo:
-        st.info("El catálogo está vacío actualmente. Ve a la pestaña de Administración para añadir productos.")
-    else:
-        for prod in st.session_state.catalogo:
-            st.markdown('<div class="product-card">', unsafe_allow_html=True)
-            
-            col_img, col_detalles = st.columns([1, 2])
-            
-            with col_img:
-                if prod["imagen"] is not None:
-                    st.image(prod["imagen"], use_container_width=True)
-                else:
-                    st.image("https://images.unsplash.com/photo-1608248597481-496100c80836?q=80&w=300", caption="Imagen de referencia", use_container_width=True)
-            
-            with col_detalles:
-                st.markdown(f"### {prod['nombre']}")
-                st.write(prod["descripcion"])
-                st.markdown(f'<p class="price-tag">${prod["precio"]:,} COP</p>', unsafe_allow_html=True)
-                
-                mensaje_comprobante = f"Hola Deisy, me interesa comprar el producto: *{prod['nombre']}* que vi en el catálogo, con un valor de *${prod['precio']:,} COP*. ¿Está disponible?"
-                mensaje_codificado = urllib.parse.quote(mensaje_comprobante)
-                enlace_wa = f"https://wa.me/{telefono_vendedor}?text={mensaje_codificado}"
-                
-                st.link_button("💬 Pedir por WhatsApp", enlace_wa, type="primary")
-                
-            st.markdown('</div>', unsafe_allow_html=True)
+                    if btn_guardar_edicion:
+                        if edit_nombre and edit_precio > 0:
+                            producto_a_editar['nombre'] = edit_nombre
+                            producto_a_editar['descripcion'] = edit_desc
+                            producto_a_editar['precio'] = edit_precio
+                            if edit_foto is not None:
+                                producto_a_editar['imagen'] = Image.open(edit
