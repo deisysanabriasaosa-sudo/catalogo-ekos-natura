@@ -1,8 +1,6 @@
 import streamlit as st
 import urllib.parse
 from PIL import Image
-import base64
-import io
 
 # 1. Configuración de página
 st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", layout="wide")
@@ -10,7 +8,6 @@ st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", 
 # Inicialización del estado
 if 'catalogo' not in st.session_state: st.session_state.catalogo = []
 if 'admin_logged_in' not in st.session_state: st.session_state.admin_logged_in = False
-if 'edit_id' not in st.session_state: st.session_state.edit_id = None
 
 # CSS
 st.markdown("""
@@ -20,7 +17,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Título
+# Encabezado
 st.markdown('<div class="header-box"><h1>Natura Catálogo Interactivo</h1><p>Biodiversidad amazónica para el cuidado de tu cuerpo</p></div>', unsafe_allow_html=True)
 
 # Tabs
@@ -30,10 +27,11 @@ tab_cliente, tab_admin = st.tabs(["🛒 Catálogo", "🔐 Administración"])
 with tab_admin:
     if not st.session_state.admin_logged_in:
         st.subheader("Login de Administrador")
-        usuario = st.text_input("Usuario")
-        clave = st.text_input("Contraseña", type="password")
+        usuario_input = st.text_input("Usuario")
+        clave_input = st.text_input("Contraseña", type="password")
         if st.button("Ingresar"):
-            if usuario == "DCSANABRIA" and clave == "1098665319*":
+            # Verificación estricta
+            if usuario_input.strip() == "DCSANABRIA" and clave_input.strip() == "1098665319*":
                 st.session_state.admin_logged_in = True
                 st.rerun()
             else:
@@ -45,7 +43,7 @@ with tab_admin:
             
         st.subheader("Gestión de Productos")
         
-        # Formulario simple sin st.form para evitar errores de submit
+        # Formulario de agregar
         nombre = st.text_input("Nombre del producto")
         precio = st.number_input("Precio", min_value=0)
         desc = st.text_area("Descripción")
@@ -62,6 +60,7 @@ with tab_admin:
                     'imagen': img
                 })
                 st.success("Producto agregado")
+                st.rerun()
         
         st.divider()
         for i, prod in enumerate(st.session_state.catalogo):
@@ -73,6 +72,8 @@ with tab_admin:
 
 # CLIENTE
 with tab_cliente:
+    if not st.session_state.catalogo:
+        st.info("No hay productos disponibles actualmente.")
     for prod in st.session_state.catalogo:
         st.markdown('<div class="product-card">', unsafe_allow_html=True)
         col1, col2 = st.columns([1, 3])
