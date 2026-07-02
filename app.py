@@ -11,15 +11,28 @@ URL_NATURA = "https://docs.google.com/spreadsheets/d/1ImD9O5hdrgJJFQWdiVDTulICba
 NOMBRE_HOJA = "Hoja1"
 
 # --- FUNCIONES DE BASE DE DATOS ---
-@st.cache_data(ttl=60) # Aumentado a 60s para evitar exceder el límite de consultas de la API de Google
+@st.cache_data(ttl=60)
 def obtener_productos():
+    columnas_esperadas = ["Nombre", "Descripción", "Precio", "Imagen"]
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, usecols=[0, 1, 2, 3])
-        return df.dropna(how="all")
+        
+        # Eliminar filas que estén completamente vacías
+        df = df.dropna(how="all")
+        
+        # Si el DataFrame no está vacío pero los nombres no coinciden, los forzamos
+        if not df.empty and len(df.columns) == 4:
+            df.columns = columnas_esperadas
+        # Si la hoja está completamente vacía, devolvemos un DataFrame con las columnas correctas
+        elif df.empty:
+            return pd.DataFrame(columns=columnas_esperadas)
+            
+        return df
+        
     except Exception as e:
         st.error(f"Error al conectar con la base de datos: {e}")
-        return pd.DataFrame(columns=["Nombre", "Descripción", "Precio", "Imagen"])
+        return pd.DataFrame(columns=columnas_esperadas)
 
 def guardar_producto(nombre, descripcion, precio, imagen_url):
     conn = st.connection("gsheets", type=GSheetsConnection)
@@ -80,7 +93,7 @@ if menu == "Catálogo para Compradores":
                     mensaje_codificado = urllib.parse.quote(mensaje)
                     link_wa = f"https://wa.me/{numero_wa}?text={mensaje_codificado}"
                     
-                    # Botón nativo de Streamlit (más limpio y seguro que usar HTML)
+                    # Botón nativo de Streamlit
                     st.link_button("Comprar por WhatsApp 💬", link_wa, type="primary", use_container_width=True)
     else:
         st.info("El catálogo no tiene productos registrados o se está actualizando.")
