@@ -2,30 +2,38 @@ import streamlit as st
 import urllib.parse
 import pandas as pd
 import os
+from PIL import Image
 
 # 1. Configuración de página
 st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", layout="wide")
 
+# Carpetas de persistencia
 DATA_FILE = "catalogo.csv"
+IMG_FOLDER = "imagenes_catalogo"
+if not os.path.exists(IMG_FOLDER): os.makedirs(IMG_FOLDER)
 
 def cargar_datos():
-    if os.path.exists(DATA_FILE):
-        df = pd.read_csv(DATA_FILE)
-        # Aseguramos columnas básicas
-        for col in ['id', 'nombre', 'precio', 'descripcion', 'imagen']:
-            if col not in df.columns: df[col] = ""
-        return df.to_dict('records')
+    # Verifica si el archivo existe y tiene contenido
+    if os.path.exists(DATA_FILE) and os.path.getsize(DATA_FILE) > 0:
+        try:
+            df = pd.read_csv(DATA_FILE)
+            # Asegura que la columna 'imagen' exista
+            if 'imagen' not in df.columns:
+                df['imagen'] = ""
+            return df.to_dict('records')
+        except:
+            return []
     return []
 
 def guardar_datos(lista):
     pd.DataFrame(lista).to_csv(DATA_FILE, index=False)
 
-# Inicialización del estado
+# Inicialización
 if 'catalogo' not in st.session_state: st.session_state.catalogo = cargar_datos()
 if 'admin_logged_in' not in st.session_state: st.session_state.admin_logged_in = False
 if 'edit_index' not in st.session_state: st.session_state.edit_index = None
 
-# CSS Estilos
+# CSS
 st.markdown("""
 <style>
     .header-box { background: #3a5a40; padding: 30px; border-radius: 20px; text-align: center; color: white; margin-bottom: 30px; }
@@ -33,12 +41,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Título
 st.markdown('<div class="header-box"><h1>Natura Catálogo Interactivo</h1><p>Biodiversidad amazónica para el cuidado de tu cuerpo</p></div>', unsafe_allow_html=True)
 
 tab_cliente, tab_admin = st.tabs(["🛒 Catálogo", "🔐 Administración"])
 
-# ADMIN
 with tab_admin:
     if not st.session_state.admin_logged_in:
         usuario = st.text_input("Usuario")
@@ -56,11 +62,16 @@ with tab_admin:
         nombre = st.text_input("Nombre", value=prod_a_editar['nombre'] if prod_a_editar else "")
         precio = st.number_input("Precio", value=int(prod_a_editar['precio']) if prod_a_editar else 0)
         desc = st.text_area("Descripción", value=prod_a_editar['descripcion'] if prod_a_editar else "")
-        url_foto = st.text_input("URL de la imagen (Google Fotos/Web)", value=prod_a_editar['imagen'] if prod_a_editar else "")
+        foto = st.file_uploader("Subir foto", type=["jpg", "png"])
         
         if st.button("Guardar Producto"):
             if nombre:
-                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc, 'imagen': url_foto}
+                ruta_img = prod_a_editar['imagen'] if prod_a_editar else ""
+                if foto:
+                    ruta_img = f"{IMG_FOLDER}/{nombre.replace(' ', '_')}.png"
+                    Image.open(foto).save(ruta_img)
+                
+                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc, 'imagen': ruta_img}
                 
                 if st.session_state.edit_index is not None:
                     st.session_state.catalogo[st.session_state.edit_index] = nuevo_prod
@@ -71,26 +82,17 @@ with tab_admin:
                 st.session_state.edit_index = None
                 st.rerun()
         
-        st.divider()
         for i, prod in enumerate(st.session_state.catalogo):
             col1, col2, col3 = st.columns([3, 1, 1])
             col1.write(f"**{prod['nombre']}** - ${prod['precio']:,}")
             if col2.button("✏️", key=f"e{i}"): st.session_state.edit_index = i; st.rerun()
             if col3.button("🗑️", key=f"d{i}"): st.session_state.catalogo.pop(i); guardar_datos(st.session_state.catalogo); st.rerun()
 
-# CLIENTE
 with tab_cliente:
-    if not st.session_state.catalogo:
-        st.info("Catálogo en construcción...")
     for prod in st.session_state.catalogo:
         st.markdown('<div class="product-card">', unsafe_allow_html=True)
         c1, c2 = st.columns([1, 2])
-        # Validación de URL
-        if prod.get('imagen') and str(prod['imagen']).startswith('http'): 
-            c1.image(prod['imagen'], use_container_width=True)
-        else:
-            c1.write("Sin imagen")
-            
+        if prod.get('imagen') and os.path.exists(prod['imagen']): c1.image(prod['imagen'], use_container_width=True)
         c2.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
         link = f"https://wa.me/573184704968?text={urllib.parse.quote('Hola Deisy, me interesa: ' + prod['nombre'])}"
         c2.link_button("💬 Pedir por WhatsApp", link)
