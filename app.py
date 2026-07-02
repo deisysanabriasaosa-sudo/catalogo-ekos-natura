@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import urllib.parse
+import re
 from streamlit_gsheets import GSheetsConnection
 
 # Configuración principal de la página (Debe ser el primer comando)
@@ -10,7 +11,7 @@ st.set_page_config(page_title="Catálogo Natura", page_icon="🍃", layout="wide
 URL_NATURA = "https://docs.google.com/spreadsheets/d/1ImD9O5hdrgJJFQWdiVDTulICbas5a5vG5E5sB0sfg38/edit?usp=sharing"
 NOMBRE_HOJA = "Hoja1"
 
-# --- FUNCIONES DE BASE DE DATOS ---
+# --- FUNCIONES DE BASE DE DATOS Y UTILIDADES ---
 @st.cache_data(ttl=60)
 def obtener_productos():
     columnas_esperadas = ["Nombre", "Descripción", "Precio", "Imagen"]
@@ -24,7 +25,6 @@ def obtener_productos():
         # Si el DataFrame no está vacío pero los nombres no coinciden, los forzamos
         if not df.empty and len(df.columns) == 4:
             df.columns = columnas_esperadas
-        # Si la hoja está completamente vacía, devolvemos un DataFrame con las columnas correctas
         elif df.empty:
             return pd.DataFrame(columns=columnas_esperadas)
             
@@ -38,7 +38,6 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
     conn = st.connection("gsheets", type=GSheetsConnection)
     df_actual = obtener_productos()
     
-    # Crear el nuevo registro
     nuevo_producto = pd.DataFrame([{
         "Nombre": nombre,
         "Descripción": descripcion,
@@ -46,12 +45,29 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
         "Imagen": imagen_url
     }])
     
-    # Concatenar y actualizar la hoja
     df_actualizado = pd.concat([df_actual, nuevo_producto], ignore_index=True)
     conn.update(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, data=df_actualizado)
-    
-    # Limpiar caché para que los cambios se reflejen de inmediato
     st.cache_data.clear()
+
+def procesar_url_imagen(url):
+    """Convierte enlaces de Google Drive a enlaces de descarga directa para mostrarlos en la web."""
+    if pd.isna(url):
+        return ""
+    url = str(url).strip()
+    
+    # Si es un enlace de Google Drive, extraer el ID y convertirlo
+    if "drive.google.com" in url:
+        # Busca el patrón /d/ID_DEL_ARCHIVO/
+        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+        if match:
+            return f"https://drive.google.com/uc?id={match.group(1)}"
+            
+        # Busca el patrón id=ID_DEL_ARCHIVO
+        match = re.search(r'id=([a-zA-Z0-9_-]+)', url)
+        if match:
+            return f"https://drive.google.com/uc?id={match.group(1)}"
+            
+    return url
 
 # --- MENÚ DE NAVEGACIÓN ---
 menu = st.sidebar.selectbox("Navegación", ["Catálogo para Compradores", "Módulo de Administración"])
@@ -74,12 +90,18 @@ if menu == "Catálogo para Compradores":
     if not df_productos.empty:
         cols = st.columns(3)
         for index, row in df_productos.iterrows():
-            # Distribución en 3 columnas
             with cols[index % 3]:
                 with st.container(border=True):
-                    # Mostrar la imagen si el enlace es válido
-                    if pd.notna(row['Imagen']) and str(row['Imagen']).strip().startswith("http"):
-                        st.image(row['Imagen'], use_column_width=True)
+                    # Procesar la URL de la imagen
+                    url_imagen = procesar_url_imagen(row['Imagen'])
+                    
+                    # Mostrar la imagen de forma segura
+                    if url_imagen.startswith("http"):
+                        try:
+                            st.image(url_imagen, use_column_width=True)
+                        except Exception:
+                            # Si la URL falla (ej. protegida con contraseña o error 403), mostramos esto
+                            st.image("https://via.placeholder.com/300x300?text=Error+de+Imagen", use_column_width=True)
                     else:
                         st.image("https://via.placeholder.com/300x300?text=Sin+Foto", use_column_width=True)
                     
@@ -106,11 +128,9 @@ if menu == "Catálogo para Compradores":
 elif menu == "Módulo de Administración":
     st.title("⚙️ Administración del Catálogo")
 
-    # Inicializar estado de sesión
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
-    # Pantalla de Login
     if not st.session_state["autenticado"]:
         st.write("Ingresa tus credenciales para agregar productos.")
         usuario = st.text_input("Usuario")
@@ -123,7 +143,6 @@ elif menu == "Módulo de Administración":
             else:
                 st.error("Credenciales incorrectas. Intenta de nuevo.")
     
-    # Panel de Administración
     else:
         st.success("Sesión iniciada correctamente.")
         
@@ -137,7 +156,7 @@ elif menu == "Módulo de Administración":
             nombre_input = st.text_input("Nombre del Producto")
             descripcion_input = st.text_area("Descripción")
             precio_input = st.number_input("Precio", min_value=0, step=1000, format="%d")
-            imagen_input = st.text_input("URL de la imagen del producto")
+            imagen_input = st.text_input("URL de la imagen (Ej. Enlace de Google Drive público)")
             
             submit = st.form_submit_button("Subir al Catálogo")
             
