@@ -3,7 +3,7 @@ import urllib.parse
 from PIL import Image
 
 # 1. Configuración de la página y diseño estético natural
-st.set_page_config(page_title="Catálogo Natura EKOS", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="Catálogo Natura", page_icon="🌿", layout="wide")
 
 # Estilos CSS personalizados
 st.markdown("""
