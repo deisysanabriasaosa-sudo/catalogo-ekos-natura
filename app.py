@@ -3,7 +3,7 @@ import pandas as pd
 import urllib.parse
 from streamlit_gsheets import GSheetsConnection
 
-# Configuración principal de la página (Debe ser el primer comando)
+# Configuración principal de la página
 st.set_page_config(page_title="Catálogo Natura", page_icon="🍃", layout="wide")
 
 # --- CONFIGURACIÓN DE LA HOJA DE CÁLCULO ---
@@ -18,7 +18,6 @@ def obtener_productos():
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, usecols=[0, 1, 2, 3])
         
-        # Eliminar filas que estén completamente vacías
         df = df.dropna(how="all")
         
         if not df.empty and len(df.columns) == 4:
@@ -26,11 +25,9 @@ def obtener_productos():
         elif df.empty:
             return pd.DataFrame(columns=columnas_esperadas)
             
-        # --- LIMPIEZA DE DATOS (Soluciona el error de los "nan") ---
         df["Nombre"] = df["Nombre"].fillna("Producto sin nombre")
         df["Descripción"] = df["Descripción"].fillna("")
         df["Imagen"] = df["Imagen"].fillna("")
-        # Asegurar que el precio sea un número válido y sin decimales extraños
         df["Precio"] = pd.to_numeric(df["Precio"], errors='coerce').fillna(0)
         
         return df
@@ -57,7 +54,13 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
 # --- MENÚ DE NAVEGACIÓN ---
 menu = st.sidebar.selectbox("Navegación", ["Catálogo para Compradores", "Módulo de Administración"])
 
-# Contacto en la barra lateral
+st.sidebar.divider()
+
+# Botón mágico para limpiar la memoria y forzar la actualización
+if st.sidebar.button("🔄 Refrescar Catálogo", use_container_width=True):
+    st.cache_data.clear()
+    st.rerun()
+
 st.sidebar.divider()
 st.sidebar.subheader("📞 Contacto de Ventas")
 st.sidebar.write("**Deisy Sanabria**")
@@ -79,29 +82,23 @@ if menu == "Catálogo para Compradores":
                     
                     url_imagen = str(row['Imagen']).strip()
                     
-                    # Mostrar la imagen o un cuadro alternativo que los navegadores no bloqueen
                     if url_imagen.startswith("http"):
-                        st.markdown(
-                            f'<img src="{url_imagen}" style="width:100%; border-radius:5px; object-fit:cover; aspect-ratio:1/1;">', 
-                            unsafe_allow_html=True
-                        )
+                        try:
+                            # Volvemos al cargador nativo que es el mejor para enlaces directos .jpg
+                            st.image(url_imagen, use_column_width=True)
+                        except Exception:
+                            st.markdown('<div style="width:100%; aspect-ratio:1/1; background-color:#f0f2f6; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#555; font-weight:bold;">🚫 Error de carga</div>', unsafe_allow_html=True)
                     else:
-                        # Cuadro gris nativo (inmune a bloqueadores de anuncios)
-                        st.markdown(
-                            '<div style="width:100%; aspect-ratio:1/1; background-color:#f0f2f6; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#555; font-weight:bold;">🚫 Sin foto</div>', 
-                            unsafe_allow_html=True
-                        )
+                        st.markdown('<div style="width:100%; aspect-ratio:1/1; background-color:#f0f2f6; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#555; font-weight:bold;">🚫 Sin foto</div>', unsafe_allow_html=True)
                     
                     st.write("") 
                     
                     st.subheader(row['Nombre'])
                     st.write(row['Descripción'])
                     
-                    # Formatear el precio para que se vea limpio (ej. $38.000 en lugar de 38000.0)
                     precio_formateado = f"{int(row['Precio']):,}".replace(",", ".")
                     st.markdown(f"**Precio:** ${precio_formateado}")
                     
-                    # Generar enlace directo a WhatsApp
                     numero_wa = "573184704968"
                     mensaje = f"Hola Deisy, estoy interesado en el producto del catálogo: *{row['Nombre']}* por un valor de ${precio_formateado}."
                     mensaje_codificado = urllib.parse.quote(mensaje)
@@ -111,7 +108,6 @@ if menu == "Catálogo para Compradores":
     else:
         st.info("El catálogo no tiene productos registrados o se está actualizando.")
 
-    # Pie de página
     st.divider()
     st.caption("Catálogo gestionado por Deisy Sanabria | Cel. 3184704968")
 
