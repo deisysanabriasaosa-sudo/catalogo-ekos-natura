@@ -1,13 +1,27 @@
 import streamlit as st
 import urllib.parse
+import pandas as pd
+import os
 from PIL import Image
 
 # 1. Configuración de página
 st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", layout="wide")
 
-# Inicialización del estado
-if 'catalogo' not in st.session_state: st.session_state.catalogo = []
+# ARCHIVO DE PERSISTENCIA
+DATA_FILE = "catalogo.csv"
+
+def cargar_datos():
+    if os.path.exists(DATA_FILE):
+        return pd.read_csv(DATA_FILE).to_dict('records')
+    return []
+
+def guardar_datos(lista):
+    pd.DataFrame(lista).to_csv(DATA_FILE, index=False)
+
+# Inicialización
+if 'catalogo' not in st.session_state: st.session_state.catalogo = cargar_datos()
 if 'admin_logged_in' not in st.session_state: st.session_state.admin_logged_in = False
+if 'edit_index' not in st.session_state: st.session_state.edit_index = None
 
 # CSS
 st.markdown("""
@@ -17,68 +31,51 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Encabezado
 st.markdown('<div class="header-box"><h1>Natura Catálogo Interactivo</h1><p>Biodiversidad amazónica para el cuidado de tu cuerpo</p></div>', unsafe_allow_html=True)
 
-# Tabs
 tab_cliente, tab_admin = st.tabs(["🛒 Catálogo", "🔐 Administración"])
 
-# ADMIN
 with tab_admin:
     if not st.session_state.admin_logged_in:
-        st.subheader("Login de Administrador")
-        usuario_input = st.text_input("Usuario")
-        clave_input = st.text_input("Contraseña", type="password")
+        usuario = st.text_input("Usuario")
+        clave = st.text_input("Contraseña", type="password")
         if st.button("Ingresar"):
-            # Verificación estricta
-            if usuario_input.strip() == "DCSANABRIA" and clave_input.strip() == "1098665319*":
+            if usuario.strip() == "DCSANABRIA" and clave.strip() == "1098665319*":
                 st.session_state.admin_logged_in = True
                 st.rerun()
-            else:
-                st.error("Credenciales incorrectas")
     else:
         if st.button("Cerrar Sesión"):
             st.session_state.admin_logged_in = False
             st.rerun()
             
         st.subheader("Gestión de Productos")
+        prod_a_editar = st.session_state.catalogo[st.session_state.edit_index] if st.session_state.edit_index is not None else None
         
-        # Formulario de agregar
-        nombre = st.text_input("Nombre del producto")
-        precio = st.number_input("Precio", min_value=0)
-        desc = st.text_area("Descripción")
-        foto = st.file_uploader("Subir foto", type=["jpg", "png"])
+        nombre = st.text_input("Nombre", value=prod_a_editar['nombre'] if prod_a_editar else "")
+        precio = st.number_input("Precio", value=int(prod_a_editar['precio']) if prod_a_editar else 0)
+        desc = st.text_area("Descripción", value=prod_a_editar['descripcion'] if prod_a_editar else "")
         
         if st.button("Guardar Producto"):
             if nombre:
-                img = Image.open(foto) if foto else None
-                st.session_state.catalogo.append({
-                    'id': len(st.session_state.catalogo)+1, 
-                    'nombre': nombre, 
-                    'precio': precio, 
-                    'descripcion': desc, 
-                    'imagen': img
-                })
-                st.success("Producto agregado")
+                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc}
+                if st.session_state.edit_index is not None:
+                    st.session_state.catalogo[st.session_state.edit_index] = nuevo_prod
+                else:
+                    st.session_state.catalogo.append(nuevo_prod)
+                guardar_datos(st.session_state.catalogo)
+                st.session_state.edit_index = None
                 st.rerun()
         
-        st.divider()
         for i, prod in enumerate(st.session_state.catalogo):
-            col1, col2 = st.columns([4, 1])
+            col1, col2, col3 = st.columns([3, 1, 1])
             col1.write(f"**{prod['nombre']}** - ${prod['precio']:,}")
-            if col2.button("Eliminar", key=f"del_{i}"):
-                st.session_state.catalogo.pop(i)
-                st.rerun()
+            if col2.button("✏️", key=f"e{i}"): st.session_state.edit_index = i; st.rerun()
+            if col3.button("🗑️", key=f"d{i}"): st.session_state.catalogo.pop(i); guardar_datos(st.session_state.catalogo); st.rerun()
 
-# CLIENTE
 with tab_cliente:
-    if not st.session_state.catalogo:
-        st.info("No hay productos disponibles actualmente.")
     for prod in st.session_state.catalogo:
         st.markdown('<div class="product-card">', unsafe_allow_html=True)
-        col1, col2 = st.columns([1, 3])
-        if prod.get('imagen'): col1.image(prod['imagen'], use_container_width=True)
-        col2.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
+        st.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
         link = f"https://wa.me/573184704968?text={urllib.parse.quote('Hola Deisy, me interesa: ' + prod['nombre'])}"
-        col2.link_button("💬 Pedir por WhatsApp", link)
+        st.link_button("💬 Pedir por WhatsApp", link)
         st.markdown('</div>', unsafe_allow_html=True)
