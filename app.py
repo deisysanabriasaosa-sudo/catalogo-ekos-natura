@@ -1,99 +1,117 @@
 import streamlit as st
-import urllib.parse
 import pandas as pd
-import os
-from PIL import Image
+import urllib.parse
+from streamlit_gsheets import GSheetsConnection
 
-# 1. Configuración de página
-st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", layout="wide")
+# Configuración principal de la página
+st.set_page_config(page_title="Catálogo Natura", page_icon="🍃", layout="wide")
 
-# Carpetas de persistencia
-DATA_FILE = "catalogo.csv"
-IMG_FOLDER = "imagenes_catalogo"
-if not os.path.exists(IMG_FOLDER): os.makedirs(IMG_FOLDER)
+# --- FUNCIONES DE BASE DE DATOS ---
+# Usamos caché para no saturar las peticiones a Google Sheets
+@st.cache_data(ttl=10)
+def obtener_productos():
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df = conn.read(worksheet="Hoja1", usecols=[0, 1, 2])
+        return df.dropna(how="all")
+    except Exception as e:
+        # Retorna un DataFrame vacío si hay error o aún no se configura la conexión
+        return pd.DataFrame(columns=["Nombre", "Descripción", "Precio"])
 
-def cargar_datos():
-    # Verifica si el archivo existe y tiene contenido
-    if os.path.exists(DATA_FILE) and os.path.getsize(DATA_FILE) > 0:
-        try:
-            df = pd.read_csv(DATA_FILE)
-            # Asegura que la columna 'imagen' exista
-            if 'imagen' not in df.columns:
-                df['imagen'] = ""
-            return df.to_dict('records')
-        except:
-            return []
-    return []
+def guardar_producto(nombre, descripcion, precio):
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df_actual = obtener_productos()
+    nuevo_producto = pd.DataFrame([{"Nombre": nombre, "Descripción": descripcion, "Precio": precio}])
+    df_actualizado = pd.concat([df_actual, nuevo_producto], ignore_index=True)
+    conn.update(worksheet="Hoja1", data=df_actualizado)
+    st.cache_data.clear() # Limpiar el caché para mostrar el nuevo producto inmediatamente
 
-def guardar_datos(lista):
-    pd.DataFrame(lista).to_csv(DATA_FILE, index=False)
+# --- MENÚ DE NAVEGACIÓN ---
+menu = st.sidebar.selectbox("Navegación", ["Catálogo para Compradores", "Módulo de Administración"])
 
-# Inicialización
-if 'catalogo' not in st.session_state: st.session_state.catalogo = cargar_datos()
-if 'admin_logged_in' not in st.session_state: st.session_state.admin_logged_in = False
-if 'edit_index' not in st.session_state: st.session_state.edit_index = None
+# --- MÓDULO DE COMPRADORES ---
+if menu == "Catálogo para Compradores":
+    st.title("🍃 Catálogo Natura - Deisy Sanabria")
+    st.write("Explora nuestros productos disponibles. Haz clic en el botón para enviar tu pedido directamente por WhatsApp.")
+    st.divider()
 
-# CSS
-st.markdown("""
-<style>
-    .header-box { background: #3a5a40; padding: 30px; border-radius: 20px; text-align: center; color: white; margin-bottom: 30px; }
-    .product-card { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 5px solid #3a5a40; }
-</style>
-""", unsafe_allow_html=True)
+    df_productos = obtener_productos()
 
-st.markdown('<div class="header-box"><h1>Natura Catálogo Interactivo</h1><p>Biodiversidad amazónica para el cuidado de tu cuerpo</p></div>', unsafe_allow_html=True)
-
-tab_cliente, tab_admin = st.tabs(["🛒 Catálogo", "🔐 Administración"])
-
-with tab_admin:
-    if not st.session_state.admin_logged_in:
-        usuario = st.text_input("Usuario")
-        clave = st.text_input("Contraseña", type="password")
-        if st.button("Ingresar"):
-            if usuario.strip() == "DCSANABRIA" and clave.strip() == "1098665319*":
-                st.session_state.admin_logged_in = True
-                st.rerun()
+    if not df_productos.empty:
+        # Crear columnas para que el catálogo se vea organizado (ej. 3 productos por fila)
+        cols = st.columns(3)
+        for index, row in df_productos.iterrows():
+            with cols[index % 3]:
+                with st.container(border=True):
+                    st.subheader(row['Nombre'])
+                    st.write(row['Descripción'])
+                    st.markdown(f"**Precio: ${row['Precio']}**")
+                   
+                    # Generar enlace directo a WhatsApp (incluye indicativo +57 para Colombia)
+                    numero_wa = "573184704968"
+                    mensaje = f"Hola Deisy, estoy interesado en el producto del catálogo: *{row['Nombre']}* por un valor de ${row['Precio']}."
+                    mensaje_codificado = urllib.parse.quote(mensaje)
+                    link_wa = f"https://wa.me/{numero_wa}?text={mensaje_codificado}"
+                   
+                    # Botón visual de WhatsApp
+                    st.markdown(
+                        f"""
+                        <a href="{link_wa}" target="_blank" style="text-decoration: none;">
+                            <div style="background-color: #25D366; color: white; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; margin-top: 10px;">
+                                Comprar por WhatsApp 💬
+                            </div>
+                        </a>
+                        """,
+                        unsafe_allow_html=True
+                    )
     else:
-        if st.button("Cerrar Sesión"): st.session_state.admin_logged_in = False; st.rerun()
-            
-        st.subheader("Gestión de Productos")
-        prod_a_editar = st.session_state.catalogo[st.session_state.edit_index] if st.session_state.edit_index is not None else None
-        
-        nombre = st.text_input("Nombre", value=prod_a_editar['nombre'] if prod_a_editar else "")
-        precio = st.number_input("Precio", value=int(prod_a_editar['precio']) if prod_a_editar else 0)
-        desc = st.text_area("Descripción", value=prod_a_editar['descripcion'] if prod_a_editar else "")
-        foto = st.file_uploader("Subir foto", type=["jpg", "png"])
-        
-        if st.button("Guardar Producto"):
-            if nombre:
-                ruta_img = prod_a_editar['imagen'] if prod_a_editar else ""
-                if foto:
-                    ruta_img = f"{IMG_FOLDER}/{nombre.replace(' ', '_')}.png"
-                    Image.open(foto).save(ruta_img)
-                
-                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc, 'imagen': ruta_img}
-                
-                if st.session_state.edit_index is not None:
-                    st.session_state.catalogo[st.session_state.edit_index] = nuevo_prod
-                else:
-                    st.session_state.catalogo.append(nuevo_prod)
-                
-                guardar_datos(st.session_state.catalogo)
-                st.session_state.edit_index = None
-                st.rerun()
-        
-        for i, prod in enumerate(st.session_state.catalogo):
-            col1, col2, col3 = st.columns([3, 1, 1])
-            col1.write(f"**{prod['nombre']}** - ${prod['precio']:,}")
-            if col2.button("✏️", key=f"e{i}"): st.session_state.edit_index = i; st.rerun()
-            if col3.button("🗑️", key=f"d{i}"): st.session_state.catalogo.pop(i); guardar_datos(st.session_state.catalogo); st.rerun()
+        st.info("El catálogo está vacío o se está actualizando. Vuelve pronto.")
 
-with tab_cliente:
-    for prod in st.session_state.catalogo:
-        st.markdown('<div class="product-card">', unsafe_allow_html=True)
-        c1, c2 = st.columns([1, 2])
-        if prod.get('imagen') and os.path.exists(prod['imagen']): c1.image(prod['imagen'], use_container_width=True)
-        c2.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
-        link = f"https://wa.me/573184704968?text={urllib.parse.quote('Hola Deisy, me interesa: ' + prod['nombre'])}"
-        c2.link_button("💬 Pedir por WhatsApp", link)
-        st.markdown('</div>', unsafe_allow_html=True)
+# --- MÓDULO DE ADMINISTRACIÓN ---
+elif menu == "Módulo de Administración":
+    st.title("⚙️ Administración del Catálogo")
+
+    # Inicializar estado de sesión para el login
+    if "autenticado" not in st.session_state:
+        st.session_state["autenticado"] = False
+
+    # Pantalla de Login
+    if not st.session_state["autenticado"]:
+        st.write("Ingresa tus credenciales para agregar productos.")
+        usuario = st.text_input("Usuario")
+        contrasena = st.text_input("Contraseña", type="password")
+       
+        if st.button("Ingresar"):
+            if usuario == "1098665319dc" and contrasena == "DeisyCaro2026*":
+                st.session_state["autenticado"] = True
+                st.rerun()
+            else:
+                st.error("Credenciales incorrectas. Intenta de nuevo.")
+   
+    # Panel de subida de productos
+    else:
+        st.success("Sesión iniciada correctamente.")
+       
+        if st.button("Cerrar Sesión"):
+            st.session_state["autenticado"] = False
+            st.rerun()
+           
+        st.subheader("Añadir un Nuevo Producto")
+       
+        with st.form("formulario_producto", clear_on_submit=True):
+            nombre_input = st.text_input("Nombre del Producto")
+            descripcion_input = st.text_area("Descripción")
+            precio_input = st.number_input("Precio", min_value=0, format="%d")
+           
+            submit = st.form_submit_button("Subir al Catálogo")
+           
+            if submit:
+                if nombre_input and descripcion_input and precio_input > 0:
+                    try:
+                        guardar_producto(nombre_input, descripcion_input, precio_input)
+                        st.success(f"¡Producto '{nombre_input}' subido exitosamente y guardado para siempre!")
+                    except Exception as e:
+                        st.error("Hubo un error al guardar. Revisa la conexión con Google Sheets.")
+                        st.write(e)
+                else:
+                    st.warning("Por favor, completa todos los campos correctamente.")
