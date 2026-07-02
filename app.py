@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import urllib.parse
-import re
 from streamlit_gsheets import GSheetsConnection
 
 # Configuración principal de la página (Debe ser el primer comando)
@@ -11,7 +10,7 @@ st.set_page_config(page_title="Catálogo Natura", page_icon="🍃", layout="wide
 URL_NATURA = "https://docs.google.com/spreadsheets/d/1ImD9O5hdrgJJFQWdiVDTulICbas5a5vG5E5sB0sfg38/edit?usp=sharing"
 NOMBRE_HOJA = "Hoja1"
 
-# --- FUNCIONES DE BASE DE DATOS Y UTILIDADES ---
+# --- FUNCIONES DE BASE DE DATOS ---
 @st.cache_data(ttl=60)
 def obtener_productos():
     columnas_esperadas = ["Nombre", "Descripción", "Precio", "Imagen"]
@@ -49,26 +48,6 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
     conn.update(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, data=df_actualizado)
     st.cache_data.clear()
 
-def procesar_url_imagen(url):
-    """Convierte enlaces de Google Drive a enlaces de descarga directa para mostrarlos en la web."""
-    if pd.isna(url):
-        return ""
-    url = str(url).strip()
-    
-    # Si es un enlace de Google Drive, extraer el ID y convertirlo
-    if "drive.google.com" in url:
-        # Busca el patrón /d/ID_DEL_ARCHIVO/
-        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
-        if match:
-            return f"https://drive.google.com/uc?id={match.group(1)}"
-            
-        # Busca el patrón id=ID_DEL_ARCHIVO
-        match = re.search(r'id=([a-zA-Z0-9_-]+)', url)
-        if match:
-            return f"https://drive.google.com/uc?id={match.group(1)}"
-            
-    return url
-
 # --- MENÚ DE NAVEGACIÓN ---
 menu = st.sidebar.selectbox("Navegación", ["Catálogo para Compradores", "Módulo de Administración"])
 
@@ -77,7 +56,6 @@ st.sidebar.divider()
 st.sidebar.subheader("📞 Contacto de Ventas")
 st.sidebar.write("**Deisy Sanabria**")
 st.sidebar.write("Cel. 3184704968")
-st.sidebar.write("Cel. 3007351747")
 
 # --- MÓDULO DE COMPRADORES ---
 if menu == "Catálogo para Compradores":
@@ -92,18 +70,21 @@ if menu == "Catálogo para Compradores":
         for index, row in df_productos.iterrows():
             with cols[index % 3]:
                 with st.container(border=True):
-                    # Procesar la URL de la imagen
-                    url_imagen = procesar_url_imagen(row['Imagen'])
                     
-                    # Mostrar la imagen de forma segura
+                    # --- NUEVO MÉTODO PARA MOSTRAR IMÁGENES ---
+                    url_imagen = str(row['Imagen']).strip()
+                    
                     if url_imagen.startswith("http"):
-                        try:
-                            st.image(url_imagen, use_column_width=True)
-                        except Exception:
-                            # Si la URL falla (ej. protegida con contraseña o error 403), mostramos esto
-                            st.image("https://via.placeholder.com/300x300?text=Error+de+Imagen", use_column_width=True)
+                        # Usamos HTML para que el navegador cargue la imagen directamente, saltando a Streamlit
+                        st.markdown(
+                            f'<img src="{url_imagen}" style="width:100%; border-radius:5px; object-fit:cover; aspect-ratio:1/1;">', 
+                            unsafe_allow_html=True
+                        )
                     else:
                         st.image("https://via.placeholder.com/300x300?text=Sin+Foto", use_column_width=True)
+                    
+                    # Espaciado para que se vea ordenado
+                    st.write("") 
                     
                     st.subheader(row['Nombre'])
                     st.write(row['Descripción'])
@@ -122,7 +103,7 @@ if menu == "Catálogo para Compradores":
 
     # Pie de página
     st.divider()
-    st.caption("Catálogo gestionado por Deisy Sanabria | Cel. 3007351747 - 3184704968")
+    st.caption("Catálogo gestionado por Deisy Sanabria | Cel. 3184704968")
 
 # --- MÓDULO DE ADMINISTRACIÓN ---
 elif menu == "Módulo de Administración":
@@ -156,7 +137,7 @@ elif menu == "Módulo de Administración":
             nombre_input = st.text_input("Nombre del Producto")
             descripcion_input = st.text_area("Descripción")
             precio_input = st.number_input("Precio", min_value=0, step=1000, format="%d")
-            imagen_input = st.text_input("URL de la imagen (Ej. Enlace de Google Drive público)")
+            imagen_input = st.text_input("URL de la imagen (Usa el 'Enlace directo' de Postimages)")
             
             submit = st.form_submit_button("Subir al Catálogo")
             
