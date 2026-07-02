@@ -21,12 +21,18 @@ def obtener_productos():
         # Eliminar filas que estén completamente vacías
         df = df.dropna(how="all")
         
-        # Si el DataFrame no está vacío pero los nombres no coinciden, los forzamos
         if not df.empty and len(df.columns) == 4:
             df.columns = columnas_esperadas
         elif df.empty:
             return pd.DataFrame(columns=columnas_esperadas)
             
+        # --- LIMPIEZA DE DATOS (Soluciona el error de los "nan") ---
+        df["Nombre"] = df["Nombre"].fillna("Producto sin nombre")
+        df["Descripción"] = df["Descripción"].fillna("")
+        df["Imagen"] = df["Imagen"].fillna("")
+        # Asegurar que el precio sea un número válido y sin decimales extraños
+        df["Precio"] = pd.to_numeric(df["Precio"], errors='coerce').fillna(0)
+        
         return df
         
     except Exception as e:
@@ -71,32 +77,36 @@ if menu == "Catálogo para Compradores":
             with cols[index % 3]:
                 with st.container(border=True):
                     
-                    # --- NUEVO MÉTODO PARA MOSTRAR IMÁGENES ---
                     url_imagen = str(row['Imagen']).strip()
                     
+                    # Mostrar la imagen o un cuadro alternativo que los navegadores no bloqueen
                     if url_imagen.startswith("http"):
-                        # Usamos HTML para que el navegador cargue la imagen directamente, saltando a Streamlit
                         st.markdown(
                             f'<img src="{url_imagen}" style="width:100%; border-radius:5px; object-fit:cover; aspect-ratio:1/1;">', 
                             unsafe_allow_html=True
                         )
                     else:
-                        st.image("https://via.placeholder.com/300x300?text=Sin+Foto", use_column_width=True)
+                        # Cuadro gris nativo (inmune a bloqueadores de anuncios)
+                        st.markdown(
+                            '<div style="width:100%; aspect-ratio:1/1; background-color:#f0f2f6; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#555; font-weight:bold;">🚫 Sin foto</div>', 
+                            unsafe_allow_html=True
+                        )
                     
-                    # Espaciado para que se vea ordenado
                     st.write("") 
                     
                     st.subheader(row['Nombre'])
                     st.write(row['Descripción'])
-                    st.markdown(f"**Precio:** ${row['Precio']}")
+                    
+                    # Formatear el precio para que se vea limpio (ej. $38.000 en lugar de 38000.0)
+                    precio_formateado = f"{int(row['Precio']):,}".replace(",", ".")
+                    st.markdown(f"**Precio:** ${precio_formateado}")
                     
                     # Generar enlace directo a WhatsApp
                     numero_wa = "573184704968"
-                    mensaje = f"Hola Deisy, estoy interesado en el producto del catálogo: *{row['Nombre']}* por un valor de ${row['Precio']}."
+                    mensaje = f"Hola Deisy, estoy interesado en el producto del catálogo: *{row['Nombre']}* por un valor de ${precio_formateado}."
                     mensaje_codificado = urllib.parse.quote(mensaje)
                     link_wa = f"https://wa.me/{numero_wa}?text={mensaje_codificado}"
                     
-                    # Botón nativo de Streamlit
                     st.link_button("Comprar por WhatsApp 💬", link_wa, type="primary", use_container_width=True)
     else:
         st.info("El catálogo no tiene productos registrados o se está actualizando.")
