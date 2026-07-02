@@ -7,8 +7,10 @@ from PIL import Image
 # 1. Configuración de página
 st.set_page_config(page_title="Natura Catálogo Interactivo", page_icon="🍃", layout="wide")
 
-# ARCHIVO DE PERSISTENCIA
+# Carpetas de persistencia
 DATA_FILE = "catalogo.csv"
+IMG_FOLDER = "imagenes_catalogo"
+if not os.path.exists(IMG_FOLDER): os.makedirs(IMG_FOLDER)
 
 def cargar_datos():
     if os.path.exists(DATA_FILE):
@@ -44,9 +46,7 @@ with tab_admin:
                 st.session_state.admin_logged_in = True
                 st.rerun()
     else:
-        if st.button("Cerrar Sesión"):
-            st.session_state.admin_logged_in = False
-            st.rerun()
+        if st.button("Cerrar Sesión"): st.session_state.admin_logged_in = False; st.rerun()
             
         st.subheader("Gestión de Productos")
         prod_a_editar = st.session_state.catalogo[st.session_state.edit_index] if st.session_state.edit_index is not None else None
@@ -54,14 +54,22 @@ with tab_admin:
         nombre = st.text_input("Nombre", value=prod_a_editar['nombre'] if prod_a_editar else "")
         precio = st.number_input("Precio", value=int(prod_a_editar['precio']) if prod_a_editar else 0)
         desc = st.text_area("Descripción", value=prod_a_editar['descripcion'] if prod_a_editar else "")
+        foto = st.file_uploader("Subir foto", type=["jpg", "png"])
         
         if st.button("Guardar Producto"):
             if nombre:
-                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc}
+                ruta_img = prod_a_editar['imagen'] if prod_a_editar else ""
+                if foto:
+                    ruta_img = f"{IMG_FOLDER}/{nombre.replace(' ', '_')}.png"
+                    Image.open(foto).save(ruta_img)
+                
+                nuevo_prod = {'id': prod_a_editar['id'] if prod_a_editar else len(st.session_state.catalogo)+1, 'nombre': nombre, 'precio': precio, 'descripcion': desc, 'imagen': ruta_img}
+                
                 if st.session_state.edit_index is not None:
                     st.session_state.catalogo[st.session_state.edit_index] = nuevo_prod
                 else:
                     st.session_state.catalogo.append(nuevo_prod)
+                
                 guardar_datos(st.session_state.catalogo)
                 st.session_state.edit_index = None
                 st.rerun()
@@ -75,7 +83,9 @@ with tab_admin:
 with tab_cliente:
     for prod in st.session_state.catalogo:
         st.markdown('<div class="product-card">', unsafe_allow_html=True)
-        st.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
+        c1, c2 = st.columns([1, 2])
+        if prod.get('imagen') and os.path.exists(prod['imagen']): c1.image(prod['imagen'], use_container_width=True)
+        c2.markdown(f"<h3>{prod['nombre']}</h3><p>{prod['descripcion']}</p><p><b>${prod['precio']:,} COP</b></p>", unsafe_allow_html=True)
         link = f"https://wa.me/573184704968?text={urllib.parse.quote('Hola Deisy, me interesa: ' + prod['nombre'])}"
-        st.link_button("💬 Pedir por WhatsApp", link)
+        c2.link_button("💬 Pedir por WhatsApp", link)
         st.markdown('</div>', unsafe_allow_html=True)
