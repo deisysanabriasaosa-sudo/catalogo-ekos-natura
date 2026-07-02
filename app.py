@@ -3,12 +3,11 @@ import pandas as pd
 import urllib.parse
 from streamlit_gsheets import GSheetsConnection
 
-# Configuración principal de la página
-st.set_title = "Catálogo Natura"
+# Configuración principal de la página (Debe ser el primer comando de Streamlit)
 st.set_page_config(page_title="Catálogo Natura", page_icon="🍃", layout="wide")
 
 # --- CONFIGURACIÓN DE LA HOJA DE CÁLCULO NATURA ---
-# Abre la hoja NATURA en el navegador de Deisy, copia todo el link de la barra de direcciones y pégalo aquí:
+# Recuerda pegar aquí el link real de la hoja de Google Sheets de Deisy
 URL_NATURA = "https://docs.google.com/spreadsheets/d/1ImD9O5hdrgJJFQWdiVDTulICbas5a5vG5E5sB0sfg38/edit?pli=1&gid=0#gid=0"
 NOMBRE_HOJA = "Hoja1"
 
@@ -17,11 +16,9 @@ NOMBRE_HOJA = "Hoja1"
 def obtener_productos():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
-        # Leemos explícitamente la hoja NATURA y la pestaña Hoja1
         df = conn.read(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, usecols=[0, 1, 2, 3])
         return df.dropna(how="all")
     except Exception as e:
-        # Retorna estructura básica si hay un error de conexión inicial
         return pd.DataFrame(columns=["Nombre", "Descripción", "Precio", "Imagen"])
 
 def guardar_producto(nombre, descripcion, precio, imagen_url):
@@ -34,12 +31,18 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
         "Imagen": imagen_url
     }])
     df_actualizado = pd.concat([df_actual, nuevo_producto], ignore_index=True)
-    # Actualizamos directamente el archivo NATURA en Drive
     conn.update(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, data=df_actualizado)
-    st.cache_data.clear() # Limpia el caché para ver el cambio de inmediato
+    st.cache_data.clear()
 
 # --- MENÚ DE NAVEGACIÓN ---
 menu = st.sidebar.selectbox("Navegación", ["Catálogo para Compradores", "Módulo de Administración"])
+
+# Contacto en la barra lateral
+st.sidebar.divider()
+st.sidebar.subheader("📞 Contacto de Ventas")
+st.sidebar.write("**Deisy Sanabria**")
+st.sidebar.write("Cel. 3184704968")
+st.sidebar.write("Cel. 3007351747")
 
 # --- MÓDULO DE COMPRADORES ---
 if menu == "Catálogo para Compradores":
@@ -54,7 +57,7 @@ if menu == "Catálogo para Compradores":
         for index, row in df_productos.iterrows():
             with cols[index % 3]:
                 with st.container(border=True):
-                    # Control de visualización de la imagen
+                    # Mostrar la imagen si el enlace es válido
                     if pd.notna(row['Imagen']) and str(row['Imagen']).startswith("http"):
                         st.image(row['Imagen'], use_column_width=True)
                     else:
@@ -64,7 +67,7 @@ if menu == "Catálogo para Compradores":
                     st.write(row['Descripción'])
                     st.markdown(f"**Precio: ${row['Precio']}**")
                    
-                    # Enlace directo a WhatsApp de la vendedora
+                    # Generar enlace directo a WhatsApp
                     numero_wa = "573184704968"
                     mensaje = f"Hola Deisy, estoy interesado en el producto del catálogo: *{row['Nombre']}* por un valor de ${row['Precio']}."
                     mensaje_codificado = urllib.parse.quote(mensaje)
@@ -81,7 +84,11 @@ if menu == "Catálogo para Compradores":
                         unsafe_allow_html=True
                     )
     else:
-        st.info("El catálogo no tiene productos registrados en la hoja NATURA o la conexión se está estableciendo.")
+        st.info("El catálogo no tiene productos registrados o se está actualizando.")
+
+    # Pie de página con el contacto agregado correctamente
+    st.divider()
+    st.caption("Catálogo gestionado por Deisy Sanabria | Cel. 3007351747 - 3184704968")
 
 # --- MÓDULO DE ADMINISTRACIÓN ---
 elif menu == "Módulo de Administración":
@@ -90,7 +97,6 @@ elif menu == "Módulo de Administración":
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
-    # Control de acceso con las credenciales asignadas
     if not st.session_state["autenticado"]:
         st.write("Ingresa tus credenciales para agregar productos.")
         usuario = st.text_input("Usuario")
@@ -131,5 +137,3 @@ elif menu == "Módulo de Administración":
                         st.write(e)
                 else:
                     st.warning("Por favor, completa los campos requeridos obligatorios (Nombre, Descripción y Precio).")
-Cel. 3007351747
-
