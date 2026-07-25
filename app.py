@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS PERSONALIZADOS (ESTÉTICTA BOTÁNICA NATURA)
+# ESTILOS CSS PERSONALIZADOS (ESTÉTICA BOTÁNICA NATURA)
 # ---------------------------------------------------------
 NATURA_CSS = """
 <style>
@@ -200,6 +200,21 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
     conn.update(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, data=df_actualizado)
     st.cache_data.clear()
 
+def actualizar_producto_en_indice(index_editar, nombre, descripcion, precio, imagen_url):
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df_actual = obtener_productos()
+    
+    if index_editar in df_actual.index:
+        df_actual.at[index_editar, "Nombre"] = nombre
+        df_actual.at[index_editar, "Descripción"] = descripcion
+        df_actual.at[index_editar, "Precio"] = precio
+        df_actual.at[index_editar, "Imagen"] = imagen_url
+        
+        conn.update(spreadsheet=URL_NATURA, worksheet=NOMBRE_HOJA, data=df_actual)
+        st.cache_data.clear()
+        return True
+    return False
+
 # ---------------------------------------------------------
 # MENÚ DE NAVEGACIÓN
 # ---------------------------------------------------------
@@ -247,7 +262,6 @@ if menu == "⚡ Entrega Inmediata (Stock Local)":
     st.markdown("## ⚡ Productos Disponibles para Entrega Inmediata")
     st.write("Aprovecha estos precios especiales y descuentos exclusivos en productos en stock listos para envío personal o entrega rápida por WhatsApp.")
 
-    # Banner hacia la tienda virtual
     st.markdown(f"""
     <div class="direct-ship-banner">
         <h3>🛍️ ¿Buscas un producto que no ves en stock local?</h3>
@@ -319,7 +333,7 @@ elif menu == "🌐 Productos desde mi tienda virtual Píde directamente aquí":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# MÓDULO 3: ADMINISTRACIÓN CON NUEVAS CREDENCIALES
+# MÓDULO 3: ADMINISTRACIÓN CON EDICIÓN DE PRODUCTOS
 # ---------------------------------------------------------
 elif menu == "⚙️ Módulo de Administración":
     st.title("⚙️ Panel de Control Administrador")
@@ -335,7 +349,6 @@ elif menu == "⚙️ Módulo de Administración":
             btn_login = st.form_submit_button("Ingresar")
             
             if btn_login:
-                # CREDENCIALES ACTUALIZADAS SEGÚN SOLICITUD
                 if usuario == "1098665319" and contrasena == "2808DC":
                     st.session_state["autenticado"] = True
                     st.rerun()
@@ -349,23 +362,74 @@ elif menu == "⚙️ Módulo de Administración":
             st.rerun()
             
         st.divider()
-        st.subheader("➕ Agregar Nuevo Producto al Stock Local")
-        
-        with st.form("formulario_producto", clear_on_submit=True):
-            nombre_input = st.text_input("Nombre del Producto")
-            descripcion_input = st.text_area("Descripción detallada")
-            precio_input = st.number_input("Precio ($)", min_value=0, step=1000, format="%d")
-            imagen_input = st.text_input("URL de la imagen (Directa, ej: Postimages)")
+
+        tab_lista, tab_agregar = st.tabs(["📋 Lista y Modificación de Productos", "➕ Agregar Nuevo Producto"])
+
+        df_prod_admin = obtener_productos()
+
+        # TAB 1: VER Y MODIFICAR PRODUCTOS
+        with tab_lista:
+            st.subheader("📦 Inventario de Productos Registrados")
             
-            submit = st.form_submit_button("Guardar en Catálogo")
+            if not df_prod_admin.empty:
+                # Muestra la tabla completa
+                st.dataframe(
+                    df_prod_admin.style.format({"Precio": "${:,.0f}"}), 
+                    use_container_width=True
+                )
+                
+                st.divider()
+                st.subheader("✏️ Modificar o Editar un Producto Existente")
+                
+                opciones_prod = [f"{i} - {row['Nombre']}" for i, row in df_prod_admin.iterrows()]
+                seleccion = st.selectbox("Selecciona el producto que deseas editar:", opciones_prod)
+
+                if seleccion:
+                    index_sel = int(seleccion.split(" - ")[0])
+                    prod_sel = df_prod_admin.loc[index_sel]
+
+                    with st.form("form_editar_producto"):
+                        st.write(f"**Modificando:** {prod_sel['Nombre']}")
+                        mod_nombre = st.text_input("Nombre del Producto", value=prod_sel['Nombre'])
+                        mod_desc = st.text_area("Descripción", value=prod_sel['Descripción'])
+                        mod_precio = st.number_input("Precio ($)", min_value=0, value=int(prod_sel['Precio']), step=1000)
+                        mod_imagen = st.text_input("URL Imagen", value=prod_sel['Imagen'])
+
+                        btn_guardar_edit = st.form_submit_button("💾 Guardar Cambios en Google Sheets")
+
+                        if btn_guardar_edit:
+                            with st.spinner("Actualizando en la base de datos..."):
+                                exito = actualizar_producto_en_indice(
+                                    index_sel, mod_nombre, mod_desc, mod_precio, mod_imagen
+                                )
+                            if exito:
+                                st.success("¡Producto modificado con éxito!")
+                                st.rerun()
+                            else:
+                                st.error("No se pudo actualizar el producto.")
+            else:
+                st.info("No hay productos cargados en la hoja de cálculo.")
+
+        # TAB 2: AGREGAR NUEVO PRODUCTO
+        with tab_agregar:
+            st.subheader("➕ Agregar Nuevo Producto al Stock Local")
             
-            if submit:
-                if nombre_input and descripcion_input and precio_input > 0:
-                    try:
-                        with st.spinner("Guardando en Google Sheets..."):
-                            guardar_producto(nombre_input, descripcion_input, precio_input, imagen_input)
-                        st.success(f"¡Producto '{nombre_input}' publicado exitosamente!")
-                    except Exception as e:
-                        st.error("Error al actualizar la base de datos.")
-                else:
-                    st.warning("Completa los campos obligatorios.")
+            with st.form("formulario_producto", clear_on_submit=True):
+                nombre_input = st.text_input("Nombre del Producto")
+                descripcion_input = st.text_area("Descripción detallada")
+                precio_input = st.number_input("Precio ($)", min_value=0, step=1000, format="%d")
+                imagen_input = st.text_input("URL de la imagen (Directa, ej: Postimages)")
+                
+                submit = st.form_submit_button("Guardar en Catálogo")
+                
+                if submit:
+                    if nombre_input and descripcion_input and precio_input > 0:
+                        try:
+                            with st.spinner("Guardando en Google Sheets..."):
+                                guardar_producto(nombre_input, descripcion_input, precio_input, imagen_input)
+                            st.success(f"¡Producto '{nombre_input}' publicado exitosamente!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("Error al actualizar la base de datos.")
+                    else:
+                        st.warning("Completa los campos obligatorios.")
