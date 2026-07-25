@@ -18,7 +18,7 @@ st.set_page_config(
 # ---------------------------------------------------------
 NATURA_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Poppins', sans-serif;
@@ -29,47 +29,40 @@ NATURA_CSS = """
         background: linear-gradient(135deg, #FAF6F0 0%, #F5EFE6 100%);
     }
 
-    /* ENCABEZADO ESTILO CORONA BOTÁNICA */
-    .header-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 30px 10px;
-        margin-bottom: 25px;
-    }
-
-    .botanical-circle {
-        background-color: #FFFFFF;
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    /* ENCABEZADO PRINCIPAL BOTÁNICO Y LLAMATIVO */
+    .header-natura-banner {
+        background: linear-gradient(135deg, #FF6B00 0%, #E05206 50%, #C03B00 100%);
+        border-radius: 24px;
+        padding: 40px 25px;
+        color: #FFFFFF;
         text-align: center;
-        padding: 25px;
-        /* Sombra cálida suave */
-        box-shadow: 0px 15px 35px rgba(224, 82, 6, 0.12), 0px 0px 0px 12px rgba(255, 255, 255, 0.6);
-        border: 2px solid #F0E6D8;
+        box-shadow: 0px 12px 30px rgba(224, 82, 6, 0.25);
+        margin-bottom: 30px;
         position: relative;
+        overflow: hidden;
     }
 
-    .brand-logo-text {
+    .header-natura-banner h1 {
+        color: #FFFFFF !important;
         font-size: 2.2rem;
         font-weight: 700;
-        color: #333333;
-        letter-spacing: -1px;
-        margin-bottom: 0px;
-        line-height: 1;
+        margin-bottom: 10px;
+        letter-spacing: -0.5px;
     }
 
-    .brand-slogan {
+    .header-natura-banner p.slogan-principal {
         font-family: 'Playfair Display', serif;
         font-style: italic;
-        font-size: 1.2rem;
-        color: #4A3E3D;
-        margin-top: 5px;
+        font-size: 1.3rem;
+        opacity: 0.95;
+        margin-bottom: 8px;
+    }
+
+    .header-natura-banner p.subtitulo {
+        font-size: 0.95rem;
+        opacity: 0.88;
+        max-width: 750px;
+        margin: 0 auto;
     }
 
     /* Tarjetas de producto */
@@ -120,13 +113,13 @@ NATURA_CSS = """
 
     /* Banner Tienda Online Directa */
     .direct-ship-banner {
-        background: linear-gradient(135deg, #FF6B00 0%, #D84A00 100%);
+        background: linear-gradient(135deg, #2D5A27 0%, #1E3E1A 100%);
         border-radius: 20px;
         padding: 25px;
         color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 8px 20px rgba(216, 74, 0, 0.25);
+        box-shadow: 0 8px 20px rgba(45, 90, 39, 0.2);
     }
 
     .direct-ship-banner h3 {
@@ -136,17 +129,17 @@ NATURA_CSS = """
 
     .btn-natura-official {
         display: inline-block;
-        background-color: #FFFFFF;
-        color: #D84A00 !important;
+        background-color: #FF6B00;
+        color: #FFFFFF !important;
         font-weight: 700;
         padding: 12px 28px;
         border-radius: 30px;
         text-decoration: none;
         margin-top: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
     }
     .btn-natura-official:hover {
-        background-color: #FFF0E6;
+        background-color: #E05206;
     }
 
     /* Sidebar personalizado */
@@ -213,8 +206,8 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
 menu = st.sidebar.radio(
     "Navegación", 
     [
-        "🌸 Catálogo Local", 
-        "🚚 Envíos Directos (Tienda Oficial)", 
+        "⚡ Entrega Inmediata (Stock Local)", 
+        "🌐 Productos desde mi tienda virtual Píde directamente aquí", 
         "⚙️ Módulo de Administración"
     ]
 )
@@ -235,29 +228,31 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# ENCABEZADO VISUAL ESTILO CIRCULAR BOTÁNICO
+# ENCABEZADO PRINCIPAL INSPIRADO EN NATURA
 # ---------------------------------------------------------
 st.markdown("""
-<div class="header-container">
-    <div class="botanical-circle">
-        <div style="color: #FF6B00; font-size: 2rem; line-height: 1;">🍃</div>
-        <div class="brand-logo-text">natura</div>
-        <div class="brand-slogan">Bien estar bien</div>
-    </div>
+<div class="header-natura-banner">
+    <div style="font-size: 2.2rem; margin-bottom: 5px;">🍃🌸✨</div>
+    <h1>Siente la Fuerza de la Naturaleza en tu Piel</h1>
+    <p class="slogan-principal">"Bien estar bien: Armonía entre tu cuerpo, tu mente y el planeta"</p>
+    <p class="subtitulo">Descubre la combinación perfecta de perfumería fina, activos de la biodiversidad brasileña y tratamiento cosmético avanzado.</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# MÓDULO 1: CATÁLOGO LOCAL
+# MÓDULO 1: STOCK LOCAL / ENTREGA INMEDIATA
 # ---------------------------------------------------------
-if menu == "🌸 Catálogo Local":
+if menu == "⚡ Entrega Inmediata (Stock Local)":
 
-    # Banner promocional hacia la tienda con envío directo
+    st.markdown("## ⚡ Productos Disponibles para Entrega Inmediata")
+    st.write("Aprovecha estos precios especiales y descuentos exclusivos en productos en stock listos para envío personal o entrega rápida por WhatsApp.")
+
+    # Banner hacia la tienda virtual
     st.markdown(f"""
     <div class="direct-ship-banner">
-        <h3>🚀 ¿Prefieres entrega directa a tu domicilio?</h3>
-        <p>Haz tus compras en mi tienda digital Natura Colombia y recibe tu pedido en la puerta de tu casa a nivel nacional.</p>
-        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official">Comprar en Tienda Oficial con Envío Directo 🛒</a>
+        <h3>🛍️ ¿Buscas un producto que no ves en stock local?</h3>
+        <p>Visita mi tienda virtual oficial para comprar directo a Natura con envío hasta la puerta de tu casa.</p>
+        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official">Ir a Tienda Virtual Natura ↗️</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -266,7 +261,7 @@ if menu == "🌸 Catálogo Local":
     if not df_productos.empty:
         col_busqueda, col_filtro = st.columns([2, 1])
         with col_busqueda:
-            busqueda = st.text_input("🔍 Buscar por nombre de producto...", "").strip().lower()
+            busqueda = st.text_input("🔍 Buscar en stock por nombre...", "").strip().lower()
         with col_filtro:
             precio_max = float(df_productos["Precio"].max()) if not df_productos.empty else 100000.0
             precio_filtro = st.slider("Precio Máximo ($)", min_value=0, max_value=int(precio_max), value=int(precio_max), step=5000)
@@ -286,7 +281,7 @@ if menu == "🌸 Catálogo Local":
                     precio_formateado = f"{int(row['Precio']):,}".replace(",", ".")
                     
                     numero_wa = "573184704968"
-                    mensaje = f"Hola Deisy, estoy interesada en el producto: *{row['Nombre']}* por ${precio_formateado}."
+                    mensaje = f"Hola Deisy, deseo adquirir para entrega inmediata el producto: *{row['Nombre']}* por ${precio_formateado}."
                     link_wa = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje)}"
 
                     with st.container():
@@ -306,31 +301,28 @@ if menu == "🌸 Catálogo Local":
         else:
             st.warning("No se encontraron productos con los criterios seleccionados.")
     else:
-        st.info("El catálogo no tiene productos registrados actualmente.")
+        st.info("El catálogo local se está actualizando.")
 
 # ---------------------------------------------------------
-# MÓDULO 2: ENVÍOS DIRECTOS (TIENDA OFICIAL NATURA)
+# MÓDULO 2: PRODUCTOS DESDE MI TIENDA VIRTUAL
 # ---------------------------------------------------------
-elif menu == "🚚 Envíos Directos (Tienda Oficial)":
-    st.markdown("## 🚚 Envíos Directos a todo el País")
-    st.write("Si deseas comprar directamente en la plataforma oficial de Natura Colombia para pagar con tarjeta de crédito, PSE o solicitar envío directo a tu ciudad, puedes hacerlo aquí:")
+elif menu == "🌐 Productos desde mi tienda virtual Píde directamente aquí":
+    st.markdown("## 🌐 Productos desde mi tienda virtual Píde directamente aquí")
+    st.write("Explora todo el portafolio completo de Natura Colombia. Realiza tu compra en línea de forma segura con tarjeta, PSE o pagos digitales y recibe el envío directo a cualquier ciudad.")
 
     st.markdown(f"""
-    <div style="background-color:#FFFFFF; border-radius:18px; padding:30px; text-align:center; border:1px solid #EAE5DF; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-        <h3 style="color:#E05206;">🛍️ Mi Tienda Digital Natura Oficial</h3>
-        <p style="color:#555;">Disfruta de promociones exclusivas del ciclo, cupones de descuento y entrega gestionada por Natura.</p>
-        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official" style="background:#FF6B00; color:white !important;">Abrir Mi Tienda Digital Natura ↗️</a>
+    <div style="background-color:#FFFFFF; border-radius:20px; padding:35px; text-align:center; border:1px solid #EAE5DF; box-shadow: 0 4px 15px rgba(0,0,0,0.04);">
+        <h3 style="color:#E05206; margin-bottom:10px;">✨ Comprar en Mi Portal Oficial Natura Colombia</h3>
+        <p style="color:#555; max-width:600px; margin:0 auto 20px auto;">Accede a promociones del ciclo vigente, cupones de descuento especiales y garantía directa de fábrica Natura con entrega nacional.</p>
+        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official" style="font-size:1.1rem; padding:14px 32px;">Abrir Mi Tienda Virtual Natura 🛒</a>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.divider()
-    st.info("💡 **Consejo:** Para pedidos urgentes en stock o entregas personalizadas locales, puedes usar la sección **'Catálogo Local'** y hacer tu pedido por WhatsApp.")
 
 # ---------------------------------------------------------
-# MÓDULO 3: ADMINISTRACIÓN
+# MÓDULO 3: ADMINISTRACIÓN CON NUEVAS CREDENCIALES
 # ---------------------------------------------------------
 elif menu == "⚙️ Módulo de Administración":
-    st.title("⚙️ Panel de Control")
+    st.title("⚙️ Panel de Control Administrador")
 
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
@@ -343,11 +335,12 @@ elif menu == "⚙️ Módulo de Administración":
             btn_login = st.form_submit_button("Ingresar")
             
             if btn_login:
-                if usuario == "1098665319dc" and contrasena == "DeisyCaro2026*":
+                # CREDENCIALES ACTUALIZADAS SEGÚN SOLICITUD
+                if usuario == "1098665319" and contrasena == "2808DC":
                     st.session_state["autenticado"] = True
                     st.rerun()
                 else:
-                    st.error("Credenciales incorrectas.")
+                    st.error("Credenciales incorrectas. Verifica el usuario o la contraseña.")
     
     else:
         st.success("Sesión activa como Administradora.")
@@ -356,7 +349,7 @@ elif menu == "⚙️ Módulo de Administración":
             st.rerun()
             
         st.divider()
-        st.subheader("➕ Agregar Nuevo Producto")
+        st.subheader("➕ Agregar Nuevo Producto al Stock Local")
         
         with st.form("formulario_producto", clear_on_submit=True):
             nombre_input = st.text_input("Nombre del Producto")
