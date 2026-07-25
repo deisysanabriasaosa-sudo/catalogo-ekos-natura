@@ -14,94 +14,142 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# ESTILOS CSS PERSONALIZADOS (ESTÉTICTA NATURA)
+# ESTILOS CSS PERSONALIZADOS (ESTÉTICTA BOTÁNICA NATURA)
 # ---------------------------------------------------------
 NATURA_CSS = """
 <style>
-    /* Importar fuente suave y moderna */
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Poppins', sans-serif;
     }
 
-    /* Fondo general fresco y natural */
+    /* Fondo general natural con textura suave */
     .main {
-        background: linear-gradient(135deg, #FAF8F5 0%, #F3EFEA 100%);
+        background: linear-gradient(135deg, #FAF6F0 0%, #F5EFE6 100%);
     }
 
-    /* Encabezado principal elegante */
-    .natura-header {
-        background: linear-gradient(90deg, #FF6B00 0%, #E05206 100%);
-        padding: 30px;
-        border-radius: 20px;
-        color: white;
-        text-align: center;
-        box-shadow: 0px 10px 25px rgba(224, 82, 6, 0.2);
+    /* ENCABEZADO ESTILO CORONA BOTÁNICA */
+    .header-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 30px 10px;
         margin-bottom: 25px;
     }
-    
-    .natura-header h1 {
-        color: #FFFFFF !important;
-        font-weight: 700;
-        margin-bottom: 5px;
+
+    .botanical-circle {
+        background-color: #FFFFFF;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 25px;
+        /* Sombra cálida suave */
+        box-shadow: 0px 15px 35px rgba(224, 82, 6, 0.12), 0px 0px 0px 12px rgba(255, 255, 255, 0.6);
+        border: 2px solid #F0E6D8;
+        position: relative;
     }
 
-    .natura-header p {
-        font-size: 1.1rem;
-        opacity: 0.95;
+    .brand-logo-text {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #333333;
+        letter-spacing: -1px;
+        margin-bottom: 0px;
+        line-height: 1;
+    }
+
+    .brand-slogan {
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 1.2rem;
+        color: #4A3E3D;
+        margin-top: 5px;
     }
 
     /* Tarjetas de producto */
     .natura-card {
         background-color: #FFFFFF;
-        border-radius: 16px;
+        border-radius: 18px;
         padding: 18px;
         border: 1px solid #EAE5DF;
-        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.04);
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.03);
         transition: transform 0.25s ease, box-shadow 0.25s ease;
         margin-bottom: 20px;
     }
     
     .natura-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 8px 25px rgba(224, 82, 6, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0px 10px 25px rgba(224, 82, 6, 0.1);
     }
 
-    /* Tag de precio */
+    /* Badge de Precio */
     .price-tag {
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: #E05206;
         background: #FFF4EE;
         padding: 4px 12px;
         border-radius: 10px;
         display: inline-block;
-        margin-top: 8px;
-        margin-bottom: 12px;
+        margin: 8px 0 12px 0;
     }
 
-    /* Botón personalizado de WhatsApp */
+    /* Botón WhatsApp */
     .wa-button {
         display: block;
         width: 100%;
         background-color: #25D366;
         color: white !important;
         text-align: center;
-        padding: 10px 15px;
+        padding: 10px;
         border-radius: 12px;
         font-weight: 600;
         text-decoration: none;
-        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
-        transition: background-color 0.2s ease;
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
     }
     .wa-button:hover {
         background-color: #1EBE57;
         color: white !important;
-        text-decoration: none;
     }
 
-    /* Estilos del Sidebar */
+    /* Banner Tienda Online Directa */
+    .direct-ship-banner {
+        background: linear-gradient(135deg, #FF6B00 0%, #D84A00 100%);
+        border-radius: 20px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 20px rgba(216, 74, 0, 0.25);
+    }
+
+    .direct-ship-banner h3 {
+        color: white !important;
+        margin-bottom: 8px;
+    }
+
+    .btn-natura-official {
+        display: inline-block;
+        background-color: #FFFFFF;
+        color: #D84A00 !important;
+        font-weight: 700;
+        padding: 12px 28px;
+        border-radius: 30px;
+        text-decoration: none;
+        margin-top: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .btn-natura-official:hover {
+        background-color: #FFF0E6;
+    }
+
+    /* Sidebar personalizado */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF;
         border-right: 1px solid #EAE5DF;
@@ -115,6 +163,7 @@ st.markdown(NATURA_CSS, unsafe_allow_html=True)
 # ---------------------------------------------------------
 URL_NATURA = "https://docs.google.com/spreadsheets/d/1ImD9O5hdrgJJFQWdiVDTulICbas5a5vG5E5sB0sfg38/edit?usp=sharing"
 NOMBRE_HOJA = "Hoja1"
+URL_TIENDA_OFICIAL = "https://www.natura.com.co/consultoria/DCSS"
 
 # ---------------------------------------------------------
 # FUNCIONES DE BASE DE DATOS
@@ -159,11 +208,16 @@ def guardar_producto(nombre, descripcion, precio, imagen_url):
     st.cache_data.clear()
 
 # ---------------------------------------------------------
-# MENÚ DE NAVEGACIÓN Y SIDEBAR
+# MENÚ DE NAVEGACIÓN
 # ---------------------------------------------------------
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/d/d4/Natura_Logo.svg", width=160) if False else None
-
-menu = st.sidebar.radio("Navegación", ["🌸 Catálogo de Productos", "⚙️ Módulo de Administración"])
+menu = st.sidebar.radio(
+    "Navegación", 
+    [
+        "🌸 Catálogo Local", 
+        "🚚 Envíos Directos (Tienda Oficial)", 
+        "⚙️ Módulo de Administración"
+    ]
+)
 
 st.sidebar.divider()
 
@@ -181,30 +235,42 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# MÓDULO DE COMPRADORES
+# ENCABEZADO VISUAL ESTILO CIRCULAR BOTÁNICO
 # ---------------------------------------------------------
-if menu == "🌸 Catálogo de Productos":
-    
-    # Header Banner Estilo Natura
-    st.markdown("""
-    <div class="natura-header">
-        <h1>🍃 Bienvenida a tu Espacio Natura</h1>
-        <p>Descubre cosméticos, perfumería y cuidado personal inspirados en la naturaleza.</p>
+st.markdown("""
+<div class="header-container">
+    <div class="botanical-circle">
+        <div style="color: #FF6B00; font-size: 2rem; line-height: 1;">🍃</div>
+        <div class="brand-logo-text">natura</div>
+        <div class="brand-slogan">Bien estar bien</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# MÓDULO 1: CATÁLOGO LOCAL
+# ---------------------------------------------------------
+if menu == "🌸 Catálogo Local":
+
+    # Banner promocional hacia la tienda con envío directo
+    st.markdown(f"""
+    <div class="direct-ship-banner">
+        <h3>🚀 ¿Prefieres entrega directa a tu domicilio?</h3>
+        <p>Haz tus compras en mi tienda digital Natura Colombia y recibe tu pedido en la puerta de tu casa a nivel nacional.</p>
+        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official">Comprar en Tienda Oficial con Envío Directo 🛒</a>
     </div>
     """, unsafe_allow_html=True)
 
     df_productos = obtener_productos()
 
     if not df_productos.empty:
-        # Buscador y Filtros
         col_busqueda, col_filtro = st.columns([2, 1])
         with col_busqueda:
-            busqueda = st.text_input("🔍 Buscar producto por nombre...", "").strip().lower()
+            busqueda = st.text_input("🔍 Buscar por nombre de producto...", "").strip().lower()
         with col_filtro:
             precio_max = float(df_productos["Precio"].max()) if not df_productos.empty else 100000.0
-            precio_filtro = st.slider("Filtrar por Precio Máximo ($)", min_value=0, max_value=int(precio_max), value=int(precio_max), step=5000)
+            precio_filtro = st.slider("Precio Máximo ($)", min_value=0, max_value=int(precio_max), value=int(precio_max), step=5000)
 
-        # Aplicar filtros
         df_filtrado = df_productos[
             (df_productos["Nombre"].str.lower().str.contains(busqueda)) &
             (df_productos["Precio"] <= precio_filtro)
@@ -223,34 +289,45 @@ if menu == "🌸 Catálogo de Productos":
                     mensaje = f"Hola Deisy, estoy interesada en el producto: *{row['Nombre']}* por ${precio_formateado}."
                     link_wa = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje)}"
 
-                    # Tarjeta contenedor
                     with st.container():
                         st.markdown('<div class="natura-card">', unsafe_allow_html=True)
                         
-                        # Renderizado de Imagen
                         if url_imagen.startswith("http"):
                             st.image(url_imagen, use_column_width=True)
                         else:
-                            st.markdown('<div style="width:100%; aspect-ratio:1/1; background-color:#F5F2ED; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#A0988E; font-weight:500;">📷 Sin fotografía</div>', unsafe_allow_html=True)
+                            st.markdown('<div style="width:100%; aspect-ratio:1/1; background-color:#F5F2ED; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#A0988E; font-weight:500;">📷 Sin foto</div>', unsafe_allow_html=True)
                         
                         st.markdown(f"### {row['Nombre']}")
                         st.write(row['Descripción'])
                         st.markdown(f'<div class="price-tag">${precio_formateado}</div>', unsafe_allow_html=True)
                         
-                        # Botón Directo WhatsApp
                         st.markdown(f'<a href="{link_wa}" target="_blank" class="wa-button">Pedir por WhatsApp 💬</a>', unsafe_allow_html=True)
-                        
                         st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("No se encontraron productos con los criterios seleccionados.")
     else:
-        st.info("El catálogo se está actualizando o no contiene productos registrados.")
-
-    st.divider()
-    st.caption("Catálogo digital gestionado por Deisy Sanabria | Atención personalizada en Colombia")
+        st.info("El catálogo no tiene productos registrados actualmente.")
 
 # ---------------------------------------------------------
-# MÓDULO DE ADMINISTRACIÓN
+# MÓDULO 2: ENVÍOS DIRECTOS (TIENDA OFICIAL NATURA)
+# ---------------------------------------------------------
+elif menu == "🚚 Envíos Directos (Tienda Oficial)":
+    st.markdown("## 🚚 Envíos Directos a todo el País")
+    st.write("Si deseas comprar directamente en la plataforma oficial de Natura Colombia para pagar con tarjeta de crédito, PSE o solicitar envío directo a tu ciudad, puedes hacerlo aquí:")
+
+    st.markdown(f"""
+    <div style="background-color:#FFFFFF; border-radius:18px; padding:30px; text-align:center; border:1px solid #EAE5DF; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+        <h3 style="color:#E05206;">🛍️ Mi Tienda Digital Natura Oficial</h3>
+        <p style="color:#555;">Disfruta de promociones exclusivas del ciclo, cupones de descuento y entrega gestionada por Natura.</p>
+        <a href="{URL_TIENDA_OFICIAL}" target="_blank" class="btn-natura-official" style="background:#FF6B00; color:white !important;">Abrir Mi Tienda Digital Natura ↗️</a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.divider()
+    st.info("💡 **Consejo:** Para pedidos urgentes en stock o entregas personalizadas locales, puedes usar la sección **'Catálogo Local'** y hacer tu pedido por WhatsApp.")
+
+# ---------------------------------------------------------
+# MÓDULO 3: ADMINISTRACIÓN
 # ---------------------------------------------------------
 elif menu == "⚙️ Módulo de Administración":
     st.title("⚙️ Panel de Control")
@@ -292,10 +369,10 @@ elif menu == "⚙️ Módulo de Administración":
             if submit:
                 if nombre_input and descripcion_input and precio_input > 0:
                     try:
-                        with st.spinner("Actualizando Google Sheets..."):
+                        with st.spinner("Guardando en Google Sheets..."):
                             guardar_producto(nombre_input, descripcion_input, precio_input, imagen_input)
                         st.success(f"¡Producto '{nombre_input}' publicado exitosamente!")
                     except Exception as e:
-                        st.error("Error al actualizar la base de datos. Verifica permisos de tu Google Sheet.")
+                        st.error("Error al actualizar la base de datos.")
                 else:
-                    st.warning("Completa los campos obligatorios (Nombre, Descripción y Precio).")
+                    st.warning("Completa los campos obligatorios.")
