@@ -7,7 +7,7 @@ from streamlit_gsheets import GSheetsConnection
 # CONFIGURACIÓN DE LA PÁGINA
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Catálogo Natura | Deisy Sanabria",
+    page_title="Catálogo Natura | David Moisés Lagos",
     page_icon="🍃",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -236,9 +236,9 @@ if st.sidebar.button("🔄 Refrescar Catálogo", use_container_width=True):
 st.sidebar.divider()
 st.sidebar.markdown("""
 <div style="background-color:#FFF4EE; padding:15px; border-radius:12px; border-left:4px solid #FF6B00;">
-    <h4 style="margin:0; color:#E05206;">🛍️ Consultora Oficial</h4>
-    <p style="margin:5px 0 0 0; font-weight:600; color:#333;">Deisy Sanabria</p>
-    <p style="margin:0; color:#666; font-size:0.9rem;">📲 Cel: 318 470 4968</p>
+    <h4 style="margin:0; color:#E05206;">🛍️ Consultor Oficial</h4>
+    <p style="margin:5px 0 0 0; font-weight:600; color:#333;">David Moisés Lagos</p>
+    <p style="margin:0; color:#666; font-size:0.9rem;">📲 Cel: 300 735 1747</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -294,8 +294,8 @@ if menu == "⚡ Entrega Inmediata (Stock Local)":
                     url_imagen = str(row['Imagen']).strip()
                     precio_formateado = f"{int(row['Precio']):,}".replace(",", ".")
                     
-                    numero_wa = "573184704968"
-                    mensaje = f"Hola Deisy, deseo adquirir para entrega inmediata el producto: *{row['Nombre']}* por ${precio_formateado}."
+                    numero_wa = "573007351747"
+                    mensaje = f"Hola David, deseo adquirir para entrega inmediata el producto: *{row['Nombre']}* por ${precio_formateado}."
                     link_wa = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje)}"
 
                     with st.container():
@@ -356,7 +356,7 @@ elif menu == "⚙️ Módulo de Administración":
                     st.error("Credenciales incorrectas. Verifica el usuario o la contraseña.")
     
     else:
-        st.success("Sesión activa como Administradora.")
+        st.success("Sesión activa como Administrador.")
         if st.button("Cerrar Sesión"):
             st.session_state["autenticado"] = False
             st.rerun()
